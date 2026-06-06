@@ -1,0 +1,59 @@
+project:
+  name: yangtze_raincalib_unet
+  output_root: outputs/rainfall_benchmark/ml
+
+data:
+  feature_store: outputs/rainfall_benchmark/ml/features/raincalib_features.parquet
+  tensor_store: outputs/rainfall_benchmark/ml/tensors/raincalib_tensor_dataset.npz
+  raincalib_v1_predictions: outputs/rainfall_benchmark/ml/predictions/raincalib_test_predictions.parquet
+  rain_scale_mm: 50.0
+  gfs_clip_mm: 200.0
+
+model:
+  run_name: raincalib_unet_v21
+  base_channels: 16
+  depth: 2
+  dropout: 0.05
+
+targets:
+  event_thresholds_mm_24h:
+    - 50.0
+    - 100.0
+
+loss:
+  rain_weight_thresholds_mm:
+    - 25.0
+    - 50.0
+    - 100.0
+  rain_weight_values:
+    - 1.0
+    - 1.25
+    - 1.75
+  event_loss_weight: 0.03
+  event_pos_weight_cap: 20.0
+  event_probability_metric: csi
+
+training:
+  batch_size: 32
+  epochs: 5
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  num_workers: 0
+  seed: 42
+  mixed_precision: true
+  overfit_batches: 4
+  overfit_steps: 80
+  balanced_sampler:
+    enabled: true
+    thresholds_mm:
+      - 50.0
+      - 100.0
+    weights:
+      - 1.25
+      - 1.5
+
+outputs:
+  models: outputs/rainfall_benchmark/ml/models
+  predictions: outputs/rainfall_benchmark/ml/predictions
+  metrics: outputs/rainfall_benchmark/ml/metrics
+  reports: outputs/rainfall_benchmark/ml/reports

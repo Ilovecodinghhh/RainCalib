@@ -1,0 +1,36 @@
+project:
+  name: yangtze_gfs_extreme_rainfall_benchmark
+  output_root: outputs/rainfall_benchmark
+
+region:
+  name: middle_lower_yangtze
+  lon_min: 108.0
+  lon_max: 123.0
+  lat_min: 24.0
+  lat_max: 35.0
+
+period:
+  years: [2023, 2024, 2025]
+  season_start: "05-01"
+  season_end: "09-30"
+  primary_comparison_years: [2023, 2024, 2025]
+  background_baseline_years: []
+
+forecast:
+  models: ["gfs"]
+  cycles_utc: ["00", "12"]
+  lead_hours: [24, 48, 72, 96, 120, 168, 240, 360]
+  accumulation_hours: 24
+
+rainfall:
+  thresholds_mm_24h: [50.0, 100.0]
+
+paths:
+  aifs_raw: outputs/rainfall_benchmark/raw/ecmwf/aifs
+  ifs_raw: outputs/rainfall_benchmark/raw/ecmwf/ifs
+  gfs_raw: outputs/rainfall_benchmark/raw/gfs
+  imerg_raw: outputs/rainfall_benchmark/raw/imerg
+  processed: outputs/rainfall_benchmark/processed
+  metrics: outputs/rainfall_benchmark/metrics
+  figures: outputs/rainfall_benchmark/figures
+  reports: outputs/rainfall_benchmark/reports

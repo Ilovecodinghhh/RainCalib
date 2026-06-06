@@ -1,0 +1,23 @@
+.venv/
+.tmp/
+.pytest_cache/
+.ipython/
+.jupyter/
+token.txt
+.earthdata.netrc
+.urs_cookies
+__pycache__/
+*.py[cod]
+
+# Local data, generated reports, and model artifacts.
+outputs/
+*.grib
+*.grb
+*.grb2
+*.nc
+*.h5
+*.hdf5
+*.parquet
+*.npz
+*.joblib
+*.pt
