@@ -105,6 +105,42 @@ v2.1 温和权重版本有所改善，但连续雨量场仍偏保守：
 
 因此 v2.1 的主要事件收益来自多任务事件头，而不是连续雨量场直接跨过 50mm/100mm 阈值。
 
+## 可视化与案例分析
+
+已新增可视化脚本：
+
+```bash
+PYTHONPATH=src python scripts/create_raincalib_visual_report.py --config configs/raincalib_unet.yaml --split test --case-count 3
+```
+
+本地生成内容：
+
+```text
+outputs/rainfall_benchmark/ml/figures/raincalib_unet_v21_test_lead_skill.png
+outputs/rainfall_benchmark/ml/figures/raincalib_unet_v21_test_intensity_diagnostics.png
+outputs/rainfall_benchmark/ml/figures/raincalib_unet_v21_test_event_skill.png
+outputs/rainfall_benchmark/ml/reports/raincalib_unet_v21_test_visual_case_study.md
+```
+
+案例分析会自动选取 test split 中观测降水最强的若干预报场，输出 IMERG、Raw GFS、RainCalib 订正场、误差场和事件概率图。
+
+## 事件概率校准
+
+已新增 isotonic calibration 脚本：
+
+```bash
+PYTHONPATH=src python scripts/calibrate_raincalib_events.py --config configs/raincalib_unet.yaml --split test --tune-split val --far-cap 0.90
+```
+
+校准结果：
+
+| Event | Raw Brier | Isotonic Brier | 说明 |
+|---:|---:|---:|---|
+| 50 mm | 0.0756 | 0.0187 | 校准显著降低过度自信，但按校准概率优化 CSI 会更保守。 |
+| 100 mm | 0.0065 | 0.0021 | 可靠性改善明显，极端事件检测仍受样本稀疏限制。 |
+
+结论：原始事件头更适合作为高召回筛查信号；isotonic 校准概率更适合做风险解释和可靠性展示。
+
 ## 复现命令
 
 激活 GPU 环境：
@@ -130,6 +166,8 @@ PYTHONPATH=src python scripts/train_raincalib_unet.py --config configs/raincalib
 ```bash
 PYTHONPATH=src python scripts/evaluate_raincalib_unet.py --config configs/raincalib_unet.yaml --split test --tune-split val
 PYTHONPATH=src python scripts/diagnose_raincalib_unet_errors.py --config configs/raincalib_unet.yaml --split test
+PYTHONPATH=src python scripts/create_raincalib_visual_report.py --config configs/raincalib_unet.yaml --split test
+PYTHONPATH=src python scripts/calibrate_raincalib_events.py --config configs/raincalib_unet.yaml --split test --tune-split val
 ```
 
 完整报告：
