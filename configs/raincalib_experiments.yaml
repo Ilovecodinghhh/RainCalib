@@ -1,0 +1,31 @@
+project:
+  name: raincalib_temporal_validation
+
+data:
+  feature_store: outputs/rainfall_benchmark/ml/features/raincalib_features.parquet
+  tensor_store: outputs/rainfall_benchmark/ml/tensors/raincalib_tensor_dataset.npz
+
+folds:
+  - name: rolling_2024
+    train_start: "2023-05-01"
+    train_end: "2023-09-30"
+    val_start: "2024-05-01"
+    val_end: "2024-07-31"
+    test_start: "2024-08-01"
+    test_end: "2024-09-30"
+  - name: rolling_2025
+    train_start: "2023-05-01"
+    train_end: "2024-09-30"
+    val_start: "2025-05-01"
+    val_end: "2025-07-31"
+    test_start: "2025-08-01"
+    test_end: "2025-09-30"
+
+seeds: [42, 123, 2024, 3407, 777]
+event_thresholds_mm: [50.0, 100.0]
+bootstrap_replicates: 1000
+fss_neighborhoods_grid_cells: [1, 3, 5]
+
+outputs:
+  root: outputs/rainfall_benchmark/experiments
+

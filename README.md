@@ -9,35 +9,32 @@ This is a research and decision-support project, not an official warning service
 | Area | What this project demonstrates |
 |---|---|
 | Meteorological data engineering | GFS / ECMWF / IMERG download planning, GRIB and NetCDF handling, 24h accumulation windows, coverage checks |
-| Forecast verification | Continuous rainfall metrics plus 50mm/100mm event scores: MAE, RMSE, Bias, Pearson r, CSI, POD, FAR, ETS |
+| Forecast verification | Rolling-origin evaluation, date-block bootstrap, continuous metrics, 50mm/100mm event scores, PR-AUC, BSS, and FSS |
 | Machine learning | sklearn baseline, PyTorch U-Net residual correction, multi-task event head, weighted loss, balanced sampling |
 | Model diagnostics | Lead-time, cycle, month, intensity-bin, spatial-grid, reliability, and case-study analysis |
-| Reproducibility | Config-driven scripts, tests, ignored local artifacts, restartable download and evaluation workflows |
+| Reproducibility | Config-driven scripts, five-seed experiments, frozen protocol, tests, ignored local artifacts, restartable workflows |
 
 ## Key Results
 
-Test split continuous rainfall skill:
+The frozen validation protocol uses two rolling-origin folds, five fixed random seeds, and 1,000 paired bootstrap resamples of complete observed dates. RainCalib v2.1 achieves stable RMSE reductions in all 10 runs:
 
-| Model | MAE | RMSE | Bias | Pearson r |
-|---|---:|---:|---:|---:|
-| Raw GFS | 8.726 | 17.209 | -0.600 | 0.048 |
-| RainCalib v1 sklearn | 7.785 | 13.363 | -0.335 | 0.132 |
-| RainCalib v2 U-Net | 7.188 | 13.333 | -0.855 | 0.195 |
-| RainCalib v2.1 U-Net | 7.049 | 13.084 | -0.751 | 0.241 |
+| Fold | Raw GFS MAE | RainCalib MAE | Raw GFS RMSE | RainCalib RMSE | Stable RMSE seeds |
+|---|---:|---:|---:|---:|---:|
+| rolling_2024 | 7.050 | 6.883 +/- 0.369 | 16.225 | 13.395 +/- 0.233 | 5/5 |
+| rolling_2025 | 7.887 | 7.078 +/- 0.268 | 15.257 | 12.385 +/- 0.155 | 5/5 |
 
-RainCalib v2.1 event-head skill:
+Heavy-rainfall event skill remains the main limitation:
 
-| Threshold | CSI | POD | FAR | ETS |
-|---:|---:|---:|---:|---:|
-| 50 mm | 0.060 | 0.489 | 0.936 | 0.043 |
-| 100 mm | 0.011 | 0.043 | 0.985 | 0.009 |
+| Fold | Event | CSI | POD | FAR | Raw FSS-5 | Event-head FSS-5 |
+|---|---:|---:|---:|---:|---:|---:|
+| rolling_2024 | 50 mm | 0.035 | 0.121 | 0.948 | 0.181 | 0.199 |
+| rolling_2024 | 100 mm | 0.013 | 0.157 | 0.980 | 0.130 | 0.072 |
+| rolling_2025 | 50 mm | 0.029 | 0.050 | 0.929 | 0.100 | 0.210 |
+| rolling_2025 | 100 mm | 0.006 | 0.073 | 0.993 | 0.027 | 0.036 |
 
-Probability calibration with isotonic regression improves reliability and Brier score, but it is intentionally reported separately from high-recall event screening:
+Internal research acceptance passes. External and production acceptance remain pending until a complete untouched future period and an independent observation product are available. See [the experimental validation report](docs/experimental_validation_results.md) for baselines, uncertainty intervals, probability metrics, and limitations.
 
-| Event | Raw Brier | Isotonic Brier | Operational note |
-|---:|---:|---:|---|
-| 50 mm | 0.0756 | 0.0187 | Raw event head is better for recall-oriented screening; calibrated probability is better for risk interpretation. |
-| 100 mm | 0.0065 | 0.0021 | Calibration reduces overconfidence, while extreme-event detection remains data-limited. |
+The earlier 2025-09-11 to 2025-09-30 development split produced MAE 7.049 and RMSE 13.084 for v2.1. It has been repeatedly inspected and is retained only as a development result, not a final holdout.
 
 ## System Overview
 
@@ -185,6 +182,16 @@ PYTHONPATH=src python scripts/create_raincalib_visual_report.py --config configs
 PYTHONPATH=src python scripts/calibrate_raincalib_events.py --config configs/raincalib_unet.yaml --split test --tune-split val
 ```
 
+Run the frozen rolling-origin experiment and acceptance workflow:
+
+```bash
+PYTHONPATH=src python scripts/audit_experiment_data.py
+PYTHONPATH=src python scripts/run_statistical_validation.py
+PYTHONPATH=src python scripts/run_unet_experiment_matrix.py
+PYTHONPATH=src python scripts/recompute_unet_fss.py
+PYTHONPATH=src python scripts/create_experimental_acceptance_report.py
+```
+
 Check GPU readiness:
 
 ```bash
@@ -212,6 +219,8 @@ The `.gitignore` file is configured to ignore these local data and artifact file
 - `docs/raincalib_results_summary.md`
 - `docs/raincalib_deep_learning_plan.md`
 - `docs/raincalib_v2_results_summary.md`
+- `docs/experimental_protocol.md`
+- `docs/experimental_validation_results.md`
 
 ## Roadmap
 

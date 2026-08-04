@@ -81,3 +81,12 @@ def test_raincalib_tensor_dataset_shapes(tmp_path):
 
     assert sample["x"].shape == (8, 3, 4)
     assert sample["y"].shape == (1, 3, 4)
+
+    indexed = RainCalibTensorDataset(
+        tensor_path,
+        indexes=np.array([1]),
+        rain_scale_mm=50.0,
+        gfs_clip_mm=200.0,
+    )
+    assert len(indexed) == 1
+    assert indexed[0]["index"] == 1

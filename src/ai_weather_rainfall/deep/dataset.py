@@ -90,12 +90,29 @@ def load_unet_config(path: Path) -> RainCalibUNetConfig:
 
 
 class RainCalibTensorDataset(Dataset):
-    def __init__(self, tensor_store: Path, split: str, *, rain_scale_mm: float, gfs_clip_mm: float) -> None:
+    def __init__(
+        self,
+        tensor_store: Path,
+        split: str | None = None,
+        *,
+        indexes: np.ndarray | None = None,
+        rain_scale_mm: float,
+        gfs_clip_mm: float,
+    ) -> None:
         data = np.load(tensor_store, allow_pickle=False)
-        split_values = data["split"].astype(str)
-        indexes = np.flatnonzero(split_values == split)
+        if split is not None and indexes is not None:
+            raise ValueError("Provide either split or indexes, not both")
+        if indexes is None:
+            if split is None:
+                raise ValueError("Either split or indexes must be provided")
+            split_values = data["split"].astype(str)
+            indexes = np.flatnonzero(split_values == split)
+        indexes = np.asarray(indexes, dtype=int)
         if len(indexes) == 0:
-            raise ValueError(f"No tensor samples found for split={split}")
+            selection = f"split={split}" if split is not None else "explicit indexes"
+            raise ValueError(f"No tensor samples found for {selection}")
+        if indexes.min() < 0 or indexes.max() >= len(data["gfs"]):
+            raise IndexError("Tensor sample indexes are out of bounds")
         self.indexes = indexes
         self.gfs = data["gfs"].astype("float32")
         self.target = data["target"].astype("float32")
