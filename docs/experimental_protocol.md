@@ -1,5 +1,9 @@
 # RainCalib Experimental Validation Protocol
 
+## Temporal correction (2026-09-29)
+
+The active protocol retains only 00 UTC initialization and 24-hour windows ending at leads divisible by 24. Legacy mixed-cycle results are historical because daily IMERG cannot label 12 UTC windows correctly. Fold boundaries, seeds, model settings, and bootstrap settings remain unchanged. Outputs are isolated under experiments_00utc. See [the revalidation record](00utc_revalidation.md).
+
 ## Purpose
 
 This protocol evaluates whether RainCalib improvements are stable across time, random seeds, forecast leads, and heavy-rainfall events. It replaces pixel-level significance claims with date-blocked comparisons.

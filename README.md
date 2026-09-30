@@ -14,9 +14,19 @@ This is a research and decision-support project, not an official warning service
 | Model diagnostics | Lead-time, cycle, month, intensity-bin, spatial-grid, reliability, and case-study analysis |
 | Reproducibility | Config-driven scripts, five-seed experiments, frozen protocol, tests, ignored local artifacts, restartable workflows |
 
-## Key Results
+## Superseded 00 UTC Revalidation
 
-The frozen validation protocol uses two rolling-origin folds, five fixed random seeds, and 1,000 paired bootstrap resamples of complete observed dates. RainCalib v2.1 achieves stable RMSE reductions in all 10 runs:
+**Spatial-label correction (2026-09-29):** A real-data end-to-end check found that the legacy feature builder flattened IMERG longitude/latitude axes in the wrong order. The following 00 UTC results are also withdrawn. The half-hourly pipeline now rebuilds forecast grids and labels from raw data with explicit dimension ordering. See [plan 2 progress](docs/halfhourly_revalidation.md).
+
+The earlier two-fold, five-seed evaluation retains 3,555 forecast fields. U-Net RMSE is **13.280 ± 0.138** versus Raw GFS **15.760** in rolling_2024, and **12.707 ± 0.208** versus **15.255** in rolling_2025. All 10 runs have favorable paired date-block 95% intervals against Raw GFS and quantile mapping.
+
+These numbers no longer support a performance claim because of the spatial-label error. Mean RMSE does **not** beat grid-month climatology in either fold, and heavy-rainfall detection remains weak with high false-alarm rates. See [the revalidation record](docs/00utc_revalidation.md) and [full corrected results](docs/00utc_validation_results.md).
+
+## Historical Mixed-Cycle Results — Superseded
+
+**Correction (2026-09-29):** The numbers below used mixed 00/12 UTC forecasts with calendar-day IMERG labels. The 12 UTC windows were mismatched; these numbers and the previous internal acceptance claim are historical and must not be treated as validated conclusions. Default configs now use only 00 UTC and separate ml_00utc / experiments_00utc artifacts. See [the revalidation record](docs/00utc_revalidation.md).
+
+The previous validation protocol used two rolling-origin folds, five fixed random seeds, and 1,000 paired bootstrap resamples of complete observed dates. It reported the following results, now retained for historical reference:
 
 | Fold | Raw GFS MAE | RainCalib MAE | Raw GFS RMSE | RainCalib RMSE | Stable RMSE seeds |
 |---|---:|---:|---:|---:|---:|
@@ -32,7 +42,9 @@ Heavy-rainfall event skill remains the main limitation:
 | rolling_2025 | 50 mm | 0.029 | 0.050 | 0.929 | 0.100 | 0.210 |
 | rolling_2025 | 100 mm | 0.006 | 0.073 | 0.993 | 0.027 | 0.036 |
 
-Internal research acceptance passes. External and production acceptance remain pending until a complete untouched future period and an independent observation product are available. See [the experimental validation report](docs/experimental_validation_results.md) for baselines, uncertainty intervals, probability metrics, and limitations.
+The previous mixed-cycle internal acceptance decision is withdrawn; the corrected 00 UTC evaluation is reported separately above. External and production acceptance remain pending until a complete untouched future period and an independent observation product are available. See [the experimental validation report](docs/experimental_validation_results.md) for baselines, uncertainty intervals, probability metrics, and limitations.
+
+For a course-facing narrative report, see [the experimental course report](docs/experimental_course_report.md).
 
 The earlier 2025-09-11 to 2025-09-30 development split produced MAE 7.049 and RMSE 13.084 for v2.1. It has been repeatedly inspected and is retained only as a development result, not a final holdout.
 
@@ -56,7 +68,7 @@ flowchart LR
 
 ## Visual Diagnostics And Case Studies
 
-Generated locally under `outputs/rainfall_benchmark/ml/figures/`:
+Generated locally under `outputs/rainfall_benchmark/ml_00utc/figures/`:
 
 - Lead-time skill curves for MAE and Bias.
 - Observed-intensity diagnostics showing how the model behaves for light rain, moderate rain, and heavy-rain tails.
@@ -79,8 +91,8 @@ PYTHONPATH=src python scripts/calibrate_raincalib_events.py --config configs/rai
 Local report paths:
 
 ```text
-outputs/rainfall_benchmark/ml/reports/raincalib_unet_v21_test_visual_case_study.md
-outputs/rainfall_benchmark/ml/reports/raincalib_unet_v21_test_event_calibration_report.md
+outputs/rainfall_benchmark/ml_00utc/reports/raincalib_unet_v21_test_visual_case_study.md
+outputs/rainfall_benchmark/ml_00utc/reports/raincalib_unet_v21_test_event_calibration_report.md
 ```
 
 These generated reports and figures are not committed because they are local experiment artifacts.
@@ -148,7 +160,7 @@ PYTHONPATH=src python scripts/download_imerg_gesdisc.py
 Run a GFS smoke download and coverage check:
 
 ```bash
-PYTHONPATH=src python scripts/download_gfs_historical.py --config configs/gfs_rainfall_benchmark.yaml --date 2025-09-01 --cycles 00 12 --retries 3
+PYTHONPATH=src python scripts/download_gfs_historical.py --config configs/gfs_rainfall_benchmark.yaml --date 2025-09-01 --cycles 00 --retries 3
 PYTHONPATH=src python scripts/check_gfs_coverage.py --config configs/gfs_rainfall_benchmark.yaml --date 2025-09-01 --sample-count 1
 ```
 
@@ -163,6 +175,8 @@ PYTHONPATH=src python -m ai_weather_rainfall.cli --config configs/gfs_rainfall_b
 ## RainCalib Training
 
 RainCalib v1 sklearn baseline:
+
+Legacy feature labels must not be copied or filtered because of the confirmed spatial-axis error. Rebuild from raw data with the commands below; plan 2 uses its separate half-hourly pipeline.
 
 ```bash
 PYTHONPATH=src python scripts/build_raincalib_features.py --config configs/raincalib.yaml --overwrite
@@ -190,6 +204,7 @@ PYTHONPATH=src python scripts/run_statistical_validation.py
 PYTHONPATH=src python scripts/run_unet_experiment_matrix.py
 PYTHONPATH=src python scripts/recompute_unet_fss.py
 PYTHONPATH=src python scripts/create_experimental_acceptance_report.py
+PYTHONPATH=src python scripts/create_experimental_report_figures.py
 ```
 
 Check GPU readiness:
@@ -221,6 +236,7 @@ The `.gitignore` file is configured to ignore these local data and artifact file
 - `docs/raincalib_v2_results_summary.md`
 - `docs/experimental_protocol.md`
 - `docs/experimental_validation_results.md`
+- `docs/experimental_course_report.md`
 
 ## Roadmap
 

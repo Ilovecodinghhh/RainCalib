@@ -59,7 +59,7 @@ def _ets(hits: int, misses: int, false_alarms: int, correct_negatives: int) -> f
 
 def _pearson(forecast: xr.DataArray, observed: xr.DataArray) -> float:
     f = forecast.values.reshape(-1)
-    o = observed.values.reshape(-1)
+    o = observed.transpose(*forecast.dims).values.reshape(-1)
     mask = np.isfinite(f) & np.isfinite(o)
     if mask.sum() < 2:
         return math.nan

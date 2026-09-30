@@ -18,7 +18,7 @@ period:
 
 forecast:
   models: ["aifs", "ifs"]
-  cycles_utc: ["00", "12"]
+  cycles_utc: ["00"]
   lead_hours: [24, 48, 72, 96, 120, 168, 240, 360]
   accumulation_hours: 24
 

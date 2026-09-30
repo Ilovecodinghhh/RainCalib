@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import timedelta
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +11,7 @@ import pyarrow.parquet as pq
 
 from ai_weather_rainfall.accumulations import accumulated_to_window_total
 from ai_weather_rainfall.config import load_config
+from ai_weather_rainfall.pipeline import _observation_date_for_window, validate_daily_windows
 from ai_weather_rainfall.data_gfs import discover_gfs_forecast_files, gfs_file_date, open_gfs_forecast_file
 from ai_weather_rainfall.download_plan import season_dates
 from ai_weather_rainfall.raincalib import add_time_features, load_raincalib_config, split_for_date
@@ -23,6 +23,7 @@ def main() -> None:
     args = _parse_args()
     cfg = load_raincalib_config(args.config)
     benchmark_cfg = load_config(cfg.benchmark_config)
+    validate_daily_windows(benchmark_cfg.forecast)
     output_path = args.output or cfg.feature_store
     output_path.parent.mkdir(parents=True, exist_ok=True)
     if output_path.exists() and not args.overwrite:
@@ -127,7 +128,7 @@ def _features_for_file(
     for lead_hour in benchmark_cfg.forecast.lead_hours:
         if lead_hour not in rainfall["lead_hour"].values:
             continue
-        observed_date = run_date + timedelta(hours=int(lead_hour) - int(benchmark_cfg.forecast.accumulation_hours))
+        observed_date = _observation_date_for_window(run_date, lead_hour, benchmark_cfg.forecast.accumulation_hours, cycle)
         if observed_date not in observed_dates:
             continue
         forecast_slice = subset_region(rainfall.sel(lead_hour=lead_hour), bounds)
@@ -169,6 +170,8 @@ def _flatten_field(
     lat = forecast["latitude"].values
     lon = forecast["longitude"].values
     lon_grid, lat_grid = np.meshgrid(lon, lat)
+    forecast = forecast.transpose("latitude", "longitude")
+    observed = observed.transpose("latitude", "longitude")
     gfs = forecast.values.reshape(-1)
     target = observed.values.reshape(-1)
     valid = np.isfinite(gfs) & np.isfinite(target)

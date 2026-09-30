@@ -1,0 +1,32 @@
+project:
+  name: yangtze_raincalib
+  output_root: outputs/rainfall_benchmark/ml_halfhourly
+
+data:
+  benchmark_config: configs/gfs_rainfall_benchmark.yaml
+  feature_store: outputs/rainfall_benchmark/ml_halfhourly/features/raincalib_features.parquet
+  feature_stride: 2
+  train_negative_sample_fraction: 1.0
+  seed: 42
+
+splits:
+  train_start: "2023-05-01"
+  train_end: "2025-08-15"
+  val_start: "2025-08-16"
+  val_end: "2025-09-10"
+  test_start: "2025-09-11"
+  test_end: "2025-09-30"
+
+targets:
+  event_thresholds_mm_24h: [50.0, 100.0]
+
+training:
+  max_train_rows: 600000
+  random_state: 42
+  optimize_event_metric: ets
+
+outputs:
+  models: outputs/rainfall_benchmark/ml_halfhourly/models
+  predictions: outputs/rainfall_benchmark/ml_halfhourly/predictions
+  metrics: outputs/rainfall_benchmark/ml_halfhourly/metrics
+  reports: outputs/rainfall_benchmark/ml_halfhourly/reports

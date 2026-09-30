@@ -1,10 +1,10 @@
 project:
   name: yangtze_raincalib
-  output_root: outputs/rainfall_benchmark/ml
+  output_root: outputs/rainfall_benchmark/ml_00utc
 
 data:
   benchmark_config: configs/gfs_rainfall_benchmark.yaml
-  feature_store: outputs/rainfall_benchmark/ml/features/raincalib_features.parquet
+  feature_store: outputs/rainfall_benchmark/ml_00utc/features/raincalib_features.parquet
   feature_stride: 2
   train_negative_sample_fraction: 1.0
   seed: 42
@@ -26,7 +26,7 @@ training:
   optimize_event_metric: ets
 
 outputs:
-  models: outputs/rainfall_benchmark/ml/models
-  predictions: outputs/rainfall_benchmark/ml/predictions
-  metrics: outputs/rainfall_benchmark/ml/metrics
-  reports: outputs/rainfall_benchmark/ml/reports
+  models: outputs/rainfall_benchmark/ml_00utc/models
+  predictions: outputs/rainfall_benchmark/ml_00utc/predictions
+  metrics: outputs/rainfall_benchmark/ml_00utc/metrics
+  reports: outputs/rainfall_benchmark/ml_00utc/reports

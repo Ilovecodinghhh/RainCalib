@@ -1,11 +1,11 @@
 project:
   name: yangtze_raincalib_unet
-  output_root: outputs/rainfall_benchmark/ml
+  output_root: outputs/rainfall_benchmark/ml_00utc
 
 data:
-  feature_store: outputs/rainfall_benchmark/ml/features/raincalib_features.parquet
-  tensor_store: outputs/rainfall_benchmark/ml/tensors/raincalib_tensor_dataset.npz
-  raincalib_v1_predictions: outputs/rainfall_benchmark/ml/predictions/raincalib_test_predictions.parquet
+  feature_store: outputs/rainfall_benchmark/ml_00utc/features/raincalib_features.parquet
+  tensor_store: outputs/rainfall_benchmark/ml_00utc/tensors/raincalib_tensor_dataset.npz
+  raincalib_v1_predictions: outputs/rainfall_benchmark/ml_00utc/predictions/raincalib_test_predictions.parquet
   rain_scale_mm: 50.0
   gfs_clip_mm: 200.0
 
@@ -53,7 +53,7 @@ training:
       - 1.5
 
 outputs:
-  models: outputs/rainfall_benchmark/ml/models
-  predictions: outputs/rainfall_benchmark/ml/predictions
-  metrics: outputs/rainfall_benchmark/ml/metrics
-  reports: outputs/rainfall_benchmark/ml/reports
+  models: outputs/rainfall_benchmark/ml_00utc/models
+  predictions: outputs/rainfall_benchmark/ml_00utc/predictions
+  metrics: outputs/rainfall_benchmark/ml_00utc/metrics
+  reports: outputs/rainfall_benchmark/ml_00utc/reports

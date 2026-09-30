@@ -1,3 +1,5 @@
+> 时间匹配勘误（2026-09-29）：本文旧指标包含12 UTC预报与IMERG自然日标签的不匹配，不再作为已验证结论或验收依据。00 UTC重新训练评估见 [复核记录](00utc_revalidation.md)。
+
 # RainCalib Experimental Validation Results
 
 - Internal research acceptance: **PASS**

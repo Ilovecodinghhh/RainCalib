@@ -33,6 +33,13 @@ def main() -> None:
         unet_fss,
         comparisons,
     )
+    cycles = sorted(set(tensor['cycle'].astype(int).tolist()))
+    if cycles == [0, 12]:
+        report = report.replace('RainCalib 00 UTC Validation Results', 'RainCalib Half-hourly IMERG 00/12 UTC Validation Results')
+        report = report.replace('These results apply only to 00 UTC; restoring 12 UTC requires subdaily observation windows and a new evaluation.',
+                                'Both 00/12 UTC windows use 48 consecutive half-hourly Late V07 intervals. Noon windows crossing split boundaries are purged. Adjacent verification windows overlap, so date-block intervals retain temporal-dependence limitations.')
+    elif cycles != [0]:
+        raise ValueError(f'Unexpected cycles in verification tensor: {cycles}')
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(report, encoding="utf-8")
     generated = cfg.output_root / "experimental_acceptance_report.md"
@@ -48,7 +55,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("docs/experimental_validation_results.md"),
+        default=Path("docs/00utc_validation_results.md"),
     )
     return parser.parse_args()
 
@@ -171,13 +178,13 @@ def _build_report(cfg, audit, statistical_metrics, statistical_fss, unet_metrics
     status = "PASS" if internal_pass else "FAIL"
     return "".join(
         [
-            "# RainCalib Experimental Validation Results\n\n",
+            "# RainCalib 00 UTC Validation Results\n\n",
             f"- Internal research acceptance: **{status}**\n",
             "- External / production acceptance: **PENDING**\n",
             f"- Data: {audit['date_start']} to {audit['date_end']}, {audit['observed_dates']} independent observed dates\n",
             f"- Forecast fields: {audit['forecast_fields']}; valid grid-cell pairs: {audit['rows']}\n",
-            f"- Frozen baseline commit: `{audit['git_commit']}`\n\n",
-            "The internal protocol passes, but this is not a production-readiness claim. The complete 2026 flood season and a second independent observation product are not yet available.\n\n",
+            f"- Base commit (working-tree temporal corrections applied): `{audit['git_commit']}`\n\n",
+            "The checklist below determines internal acceptance. An untouched future holdout and independent observations have not been evaluated in this run.\n\n",
             "## Acceptance Checklist\n\n",
             _markdown_table(criteria),
             "\n\n## Continuous Results\n\n",
@@ -188,11 +195,11 @@ def _build_report(cfg, audit, statistical_metrics, statistical_fss, unet_metrics
             _markdown_table(comparison_table),
             "\n\n## Heavy-Rainfall Results\n\n",
             _markdown_table(event_table),
-            "\n\nThe 50 mm event head improves neighborhood-scale FSS, especially in rolling_2025. The 100 mm event remains unstable, with high false-alarm rates and weak calibrated detection. Probability calibration sharply improves Brier score but can reduce useful event recall, so calibrated probabilities and screening decisions must remain separate products.\n\n",
+            "\n\nEvent skill must be assessed separately at each threshold and fold using the table above; RMSE improvements alone do not establish heavy-rainfall warning skill.\n\n",
             "## Interpretation\n\n",
-            "- The strongest defensible claim is stable RMSE reduction across both temporal folds and all five seeds.\n",
-            "- MAE improvement is stable in rolling_2025 but not for every rolling_2024 seed.\n",
-            "- RainCalib improves broad rainfall-field error more reliably than exact extreme-event localization.\n",
+            "- Check both baseline comparisons above for stable RMSE improvement across every seed.\n",
+            "- MAE and bias require separate interpretation from RMSE; consult the paired intervals.\n",
+            "- These results apply only to 00 UTC; restoring 12 UTC requires subdaily observation windows and a new evaluation.\n",
             "- Pixel counts are never treated as independent; uncertainty is blocked by observed date.\n",
             "- External validation remains mandatory before operational or production claims.\n\n",
             "## Reproduction\n\n",

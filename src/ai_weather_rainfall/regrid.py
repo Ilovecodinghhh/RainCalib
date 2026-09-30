@@ -15,6 +15,7 @@ def align_observation_to_forecast_grid(observed: xr.DataArray, forecast_template
         {lat_name: forecast_template[target_lat], lon_name: forecast_template[target_lon]},
         method="linear",
     )
+    aligned = aligned.transpose(*forecast_template.dims)
     aligned.name = "observed_on_forecast_grid"
     aligned.attrs["units"] = observed.attrs.get("units", "mm")
     return aligned

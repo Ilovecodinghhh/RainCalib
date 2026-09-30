@@ -66,6 +66,7 @@ def metric_rows(
 
 def run_benchmark(config_path: Path) -> Path:
     cfg = load_config(config_path)
+    validate_daily_windows(cfg.forecast)
     _ensure_output_dirs(cfg)
     shard_paths: list[Path] = []
     missing_rows: list[dict[str, object]] = []
@@ -96,7 +97,7 @@ def _ensure_output_dirs(cfg: BenchmarkConfig) -> None:
         cfg.paths.processed,
         cfg.paths.processed / "observed",
         cfg.paths.processed / "score_shards",
-        cfg.paths.processed / "score_shards_daily",
+        cfg.paths.processed / "score_shards_daily_aligned_v2",
         cfg.paths.metrics,
         cfg.paths.figures,
         cfg.paths.reports,
@@ -143,7 +144,7 @@ def _score_available_files(cfg: BenchmarkConfig, model: str, year: int, cycle: s
         for lead_hour in cfg.forecast.lead_hours:
             if lead_hour not in rainfall["lead_hour"].values:
                 continue
-            observed_date = _observation_date_for_window(run_date, lead_hour, cfg.forecast.accumulation_hours)
+            observed_date = _observation_date_for_window(run_date, lead_hour, cfg.forecast.accumulation_hours, cycle)
             if observed_date is None or observed_date not in observed_dates:
                 continue
             forecast_slice = subset_region(rainfall.sel(lead_hour=lead_hour), bounds)
@@ -251,16 +252,21 @@ def _observed_region_daily_path(cfg: BenchmarkConfig, year: int) -> Path:
 
 def _score_shard_path(cfg: BenchmarkConfig, model: str, year: int, cycle: str, forecast_file: Path) -> Path:
     stem = forecast_file.stem.replace(".", "_")
-    return cfg.paths.processed / "score_shards_daily" / f"{year}_{model}_{int(cycle):02d}_{stem}.csv"
+    return cfg.paths.processed / "score_shards_daily_aligned_v2" / f"{year}_{model}_{int(cycle):02d}_{stem}.csv"
 
 
-def _observation_date_for_window(run_date, lead_hour: int, accumulation_hours: int):
+def _observation_date_for_window(run_date, lead_hour: int, accumulation_hours: int, cycle):
     if run_date is None:
         return None
-    window_start_hours = int(lead_hour) - int(accumulation_hours)
-    if window_start_hours < 0:
-        return None
-    return run_date + timedelta(hours=window_start_hours)
+    if int(cycle) != 0 or accumulation_hours != 24 or lead_hour < 24 or lead_hour % 24:
+        raise ValueError("Daily IMERG requires 00 UTC, 24-hour windows and leads divisible by 24")
+    return (pd.Timestamp(run_date) + timedelta(hours=lead_hour - 24)).date()
+
+
+def validate_daily_windows(forecast):
+    for cycle in forecast.cycles_utc:
+        for lead in forecast.lead_hours:
+            _observation_date_for_window(pd.Timestamp("2000-01-01"), lead, forecast.accumulation_hours, cycle)
 
 
 def _read_metric_rows(shard_paths: Iterable[Path], missing_rows: list[dict[str, object]]) -> list[dict[str, object]]:
@@ -385,7 +391,7 @@ def _report_text(
         "This report evaluates configured weather forecast models against NASA GPM IMERG observations.\n\n"
         "**Important:** This is a research and decision-support benchmark, not an official weather warning service.\n\n"
         "Forecast 24-hour windows are matched to the IMERG calendar day at the start of each accumulation window. "
-        "For 12 UTC cycles this is an approximation because the available IMERG product is daily rather than 12-hourly.\n\n"
+        "Only 00 UTC cycles with midnight-to-midnight 24-hour windows are accepted.\n\n"
         f"- Region: {cfg.region.name} ({cfg.region.lon_min}..{cfg.region.lon_max}E, "
         f"{cfg.region.lat_min}..{cfg.region.lat_max}N)\n"
         f"- Years: {cfg.period.years}\n"

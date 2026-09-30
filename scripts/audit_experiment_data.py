@@ -58,12 +58,12 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--features",
         type=Path,
-        default=Path("outputs/rainfall_benchmark/ml/features/raincalib_features.parquet"),
+        default=Path("outputs/rainfall_benchmark/ml_00utc/features/raincalib_features.parquet"),
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("outputs/rainfall_benchmark/experiments/audit"),
+        default=Path("outputs/rainfall_benchmark/experiments_00utc/audit"),
     )
     parser.add_argument("--thresholds", type=float, nargs="+", default=[50.0, 100.0])
     return parser.parse_args()
