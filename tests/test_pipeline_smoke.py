@@ -28,7 +28,7 @@ def test_daily_observed_rainfall_from_half_hourly_data():
 
 def test_normalize_forecast_dataset_renames_tp():
     ds = xr.Dataset(
-        {"tp": (("step", "latitude", "longitude"), np.ones((2, 1, 1)))},
+        {"tp": (("step", "latitude", "longitude"), np.ones((2, 1, 1)), {"units": "mm"})},
         coords={
             "step": [np.timedelta64(6, "h"), np.timedelta64(12, "h")],
             "latitude": [30.0],

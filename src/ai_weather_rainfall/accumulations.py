@@ -2,6 +2,21 @@ import numpy as np
 import xarray as xr
 
 
+def precipitation_to_millimeters(data: xr.DataArray) -> xr.DataArray:
+    units = str(data.attrs.get("units", "")).strip().lower().replace(" ", "")
+    if units in {"m", "metre", "metres", "meter", "meters"}:
+        converted = data * 1000.0
+    elif units in {"mm", "millimetre", "millimetres", "millimeter", "millimeters",
+                   "kgm**-2", "kgm^-2", "kgm-2", "kg/m2", "kg/m^2", "kg/m**2"}:
+        converted = data.copy(deep=False)
+    else:
+        raise ValueError(f"Unsupported accumulated precipitation units: {data.attrs.get('units')!r}")
+    converted = converted.where(np.isfinite(converted))
+    converted.name = "tp"
+    converted.attrs = {**data.attrs, "units": "mm"}
+    return converted
+
+
 def accumulated_to_window_total(tp_accumulated: xr.DataArray, accumulation_hours: int) -> xr.DataArray:
     if "lead_hour" not in tp_accumulated.dims:
         raise ValueError("tp_accumulated must have a lead_hour dimension")

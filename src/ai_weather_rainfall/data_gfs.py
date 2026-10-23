@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 
+from ai_weather_rainfall.accumulations import precipitation_to_millimeters
 
 GFS_PRECIP_VARIABLES = {"tp", "apcp", "total_precipitation", "totalprecipitation", "precip"}
 
@@ -62,7 +63,7 @@ def normalize_gfs_forecast_dataset(dataset: xr.Dataset) -> xr.Dataset:
     if "tp" not in ds:
         precip_name = _precipitation_variable_name(ds)
         ds = ds.rename({precip_name: "tp"})
-    ds["tp"] = _to_millimeters(ds["tp"])
+    ds["tp"] = precipitation_to_millimeters(ds["tp"])
     return ds
 
 
@@ -75,14 +76,3 @@ def _precipitation_variable_name(dataset: xr.Dataset) -> str:
         if short_name == "tp" or short_name == "apcp" or "precipitation" in name_attr:
             return name
     raise KeyError("GFS forecast dataset must contain APCP/total precipitation")
-
-
-def _to_millimeters(data: xr.DataArray) -> xr.DataArray:
-    units = str(data.attrs.get("units", "")).lower()
-    if units in {"m", "metre", "metres", "meter", "meters"}:
-        converted = data * 1000.0
-    else:
-        converted = data
-    converted.name = "tp"
-    converted.attrs["units"] = "mm"
-    return converted.where(np.isfinite(converted))

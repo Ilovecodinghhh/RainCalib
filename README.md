@@ -137,6 +137,12 @@ Place forecast and observation data under `outputs/rainfall_benchmark/raw/`:
 - `gfs/` for GFS forecast GRIB files containing cumulative APCP records.
 - `imerg/` for IMERG precipitation files.
 
+GFS and ECMWF accumulated precipitation must declare its units. The readers convert
+metres to millimetres and accept millimetres or water mass per area (`kg m**-2`,
+equivalent to millimetres). Missing, unknown, and rate units such as `mm/hr` raise
+an error; integrate rates over their time intervals before using these readers.
+ECMWF NetCDF inputs support `.nc`, `.nc4`, and `.netcdf` extensions.
+
 The default ECMWF configuration uses the free Open Data window available for this project: 2025-05-01 through 2025-09-30. For a complete 2023-2025 historical ECMWF benchmark, use ECMWF Archive/MARS or another licensed archive.
 
 The GFS configuration uses NOAA public archives for the 2023-2025 flood seasons. The downloader reads each `.idx` file and range-downloads only cumulative `APCP:surface:0-N day acc fcst` messages needed for 24-hour rainfall windows.

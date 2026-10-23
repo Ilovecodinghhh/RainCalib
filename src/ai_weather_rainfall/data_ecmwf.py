@@ -5,6 +5,8 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 
+from ai_weather_rainfall.accumulations import precipitation_to_millimeters
+
 
 def discover_forecast_files(
     root: Path,
@@ -33,7 +35,7 @@ def forecast_file_date(path: Path) -> date | None:
 
 def open_forecast_file(path: Path) -> xr.Dataset:
     suffixes = "".join(path.suffixes).lower()
-    if path.suffix.lower() in {".nc", ".netcdf"}:
+    if path.suffix.lower() in {".nc", ".nc4", ".netcdf"}:
         return normalize_forecast_dataset(xr.open_dataset(path))
     if ".grib" in suffixes:
         return normalize_forecast_dataset(xr.open_dataset(path, engine="cfgrib"))
@@ -54,7 +56,7 @@ def normalize_forecast_dataset(dataset: xr.Dataset) -> xr.Dataset:
             ds = ds.rename({candidates[0]: "tp"})
     if "tp" not in ds:
         raise KeyError("Forecast dataset must contain total precipitation as tp")
-    ds["tp"] = _to_millimeters(ds["tp"])
+    ds["tp"] = precipitation_to_millimeters(ds["tp"])
     return ds
 
 
@@ -64,18 +66,6 @@ def describe_realtime_open_data_fetch() -> str:
         "Historical AIFS/IFS benchmark files should be retrieved from ECMWF archive access "
         "or another licensed archive, then placed under the configured raw data directories."
     )
-
-
-def _to_millimeters(data: xr.DataArray) -> xr.DataArray:
-    units = str(data.attrs.get("units", "")).lower()
-    if units in {"m", "metre", "metres", "meter", "meters"}:
-        converted = data * 1000.0
-    else:
-        converted = data
-    converted.name = "tp"
-    converted.attrs["units"] = "mm"
-    converted = converted.where(np.isfinite(converted))
-    return converted
 
 
 def _is_grib_file(path: Path) -> bool:
